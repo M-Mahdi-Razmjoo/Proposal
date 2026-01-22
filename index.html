@@ -3,28 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <title>Risk-Aware Speculation Control</title>
-  <meta name="description" content="Master's Thesis Proposal: A Risk-Aware Control Framework for Secure Microarchitecture." />
-
-  <!-- Fonts: Inter & JetBrains Mono -->
+  <title>Risk-Aware Control: Artifacts</title>
+  
+  <!-- Fonts: JetBrains Mono (Code) & Inter (UI) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-  <!-- KaTeX for Math -->
+  <!-- KaTeX -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 
-  <!-- Mermaid for Diagrams -->
-  <script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-
-  <!-- Prism for Code Highlighting -->
+  <!-- PrismJS (Syntax Highlighting) -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
 
   <link rel="stylesheet" href="assets/styles.css" />
   <script defer src="assets/app.js"></script>
@@ -35,322 +31,245 @@
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar__header">
-        <div class="brand">ODU<span class="brand__dot">.</span>Frame</div>
-        <div class="author">Mohammad Mahdi Razmjoo</div>
-        <div class="date">Jan 2026 • M.Sc. Thesis</div>
+        <div class="brand">ODU<span class="brand__accent">.ART</span></div>
+        <div class="meta">M.Sc. Thesis • Jan 2026</div>
       </div>
       
       <nav class="nav">
-        <a class="nav__item" href="#abstract">01 // Abstract</a>
-        <a class="nav__item" href="#logic">02 // Core Logic</a>
-        <a class="nav__item" href="#architecture">03 // Architecture</a>
-        <a class="nav__item" href="#setup">04 // Exp. Setup</a>
-        <a class="nav__item" href="#validation">05 // Validation Code</a>
-        <a class="nav__item" href="#plan">06 // Timeline</a>
+        <span class="nav__label">Implementation</span>
+        <a class="nav__item" href="#microarch">01. ODU Microarchitecture</a>
+        <a class="nav__item" href="#gem5">02. gem5 Integration</a>
+        
+        <span class="nav__label">Validation</span>
+        <a class="nav__item" href="#gadgets">03. Security Gadgets</a>
+        <a class="nav__item" href="#metrics">04. SVF & Quantification</a>
+        <a class="nav__item" href="#workloads">05. SPEC Workloads</a>
       </nav>
-
-      <div class="sidebar__footer">
-        <a href="#" class="btn btn--ghost">Download PDF</a>
-      </div>
     </aside>
 
-    <!-- Main Content -->
+    <!-- Main -->
     <main class="content">
       <div class="container">
         
-        <!-- Hero -->
-        <section id="abstract" class="section hero">
-          <h1 class="hero__title">A Risk-Aware Control Framework <br> <span class="text-gradient">for Secure Microarchitecture</span></h1>
-          <p class="hero__lead">
-            Moving from binary "Stop/Go" policies to a probabilistic <strong>Risk/Reward</strong> model. 
-            We propose an <strong>Optimal Decision Unit (ODU)</strong> that permits speculation only when the expected utility is positive.
+        <!-- Header -->
+        <header class="header">
+          <h1>Experimental Design & Artifacts</h1>
+          <p class="lead">
+            Technical documentation for the <strong>Risk-Aware Control Framework</strong>. 
+            This page details the implementation of the Optimal Decision Unit (ODU) and the rigorous 
+            testing methodology inspired by <em>Spectre</em>, <em>SVF</em>, and <em>Metior</em>.
           </p>
+        </header>
+
+        <!-- 1. Microarchitecture -->
+        <section id="microarch" class="section">
+          <div class="section-head">
+            <span class="mono">01</span>
+            <h2>ODU Microarchitecture</h2>
+          </div>
           
-          <div class="stats-grid">
-            <div class="stat-card">
-              <span class="stat-card__label">Target</span>
-              <span class="stat-card__val">Spectre V1/V2</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-card__label">Simulator</span>
-              <span class="stat-card__val">gem5 (O3)</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-card__label">Overhead Goal</span>
-              <span class="stat-card__val">&lt; 10%</span>
-            </div>
+          <p>
+            The core challenge is evaluating the utility equation in a single clock cycle during the Fetch stage. 
+            Direct calculation is too slow. We implement a <strong>Log-Domain Comparator</strong> using Lookup Tables (LUTs).
+          </p>
+
+          <div class="math-card">
+            <div class="math-label">Target Inequality</div>
+            \[ \pi(t) \cdot \mathcal{G} > (1 - \pi(t)) \cdot \mathcal{L} \]
+            <div class="math-divider">Hardware Implementation (Log Domain)</div>
+            \[ \underbrace{\log(\pi) - \log(1-\pi)}_{\text{LUT A (Odds)}} > \underbrace{\log(\mathcal{L}) - \log(\mathcal{G})}_{\text{LUT B (Cost)}} \]
+          </div>
+
+          <div class="callout">
+            <strong>Why this is feasible:</strong> 
+            We do not need precise floating-point math. We pre-compute <code>LUT A</code> (indexed by branch predictor confidence bits) 
+            and <code>LUT B</code> (indexed by instruction type and cache hit/miss prediction). 
+            The hardware cost is reduced to a single <strong>integer subtraction and comparison</strong>.
           </div>
         </section>
 
-        <!-- Logic -->
-        <section id="logic" class="section">
-          <div class="section-header">
-            <span class="section-num">02</span>
-            <h2>The Utility Equation</h2>
-          </div>
-          
-          <p>Current CPUs speculate blindly (High Risk). Static fences kill performance (Low Utility). We introduce a runtime check based on the <strong>Safety Inequality</strong>:</p>
-
-          <div class="math-block">
-            \[ \underbrace{\frac{\pi}{1 - \pi}}_{\text{Hardware Odds}} > \underbrace{\frac{\mathcal{L}}{\mathcal{G}}}_{\text{Software Cost}} \]
-          </div>
-
-          <div class="grid grid--2">
-            <div class="card">
-              <h3>Hardware Inputs (Dynamic)</h3>
-              <ul class="var-list">
-                <li><code class="var">π</code> : <strong>Confidence</strong> (from Branch Predictor).</li>
-                <li><code class="var">G</code> : <strong>Gain</strong> (Cycles saved, e.g., Cache Hit/Miss status).</li>
-              </ul>
-            </div>
-            <div class="card">
-              <h3>Software Inputs (Static)</h3>
-              <ul class="var-list">
-                <li><code class="var">L</code> : <strong>Leakage Capacity</strong> (Bits/cycle via Compiler).</li>
-                <li><code class="var">Threshold</code> : Tunable policy knob.</li>
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        <!-- Architecture -->
-        <section id="architecture" class="section">
-          <div class="section-header">
-            <span class="section-num">03</span>
-            <h2>Architecture (ODU)</h2>
+        <!-- 2. gem5 Integration -->
+        <section id="gem5" class="section">
+          <div class="section-head">
+            <span class="mono">02</span>
+            <h2>gem5 Implementation Strategy</h2>
           </div>
           <p>
-            The <strong>Optimal Decision Unit</strong> sits in the Fetch stage. To avoid latency on the critical path, we avoid division by using Log-Domain Arithmetic and Lookup Tables (LUTs).
+            We modify the <code>FetchUnit</code> of the <strong>gem5 O3CPU</strong> model. The logic injects a 
+            "micro-architectural stall" (bubble) when risk exceeds utility.
           </p>
 
-          <div class="diagram-container">
-            <pre class="mermaid">
-flowchart LR
-    BP[Branch Predictor] -->|Confidence π| ODU
-    Cache[Cache Status] -->|Gain G| ODU
-    Decode[Instruction Tags] -->|Leakage L| ODU
+          <div class="code-block">
+            <div class="code-header">src/cpu/o3/fetch.cc (Proposed Modification)</div>
+            <pre><code class="language-cpp">
+// In Fetch::fetch(status_change)
+bool Fetch::checkODU(DynInstPtr inst) {
     
-    subgraph ODU [Optimal Decision Unit]
-      Logic{"Log(π) - Log(1-π) > Log(L) - Log(G)"}
-    end
-
-    ODU -->|Pass| Ex[Execute]
-    ODU -->|Fail| Stall[Stall/Clamp]
-            </pre>
-          </div>
-        </section>
-
-        <!-- Setup -->
-        <section id="setup" class="section">
-          <div class="section-header">
-            <span class="section-num">04</span>
-            <h2>Experimental Setup</h2>
-          </div>
-          
-          <p>
-            We implement the ODU logic within the <strong>gem5 simulator (v23.0)</strong> using the <code>O3CPU</code> (Out-of-Order) model. 
-            The environment is configured to replicate a modern Intel Skylake-like microarchitecture, capable of deep speculation required to reproduce Spectre V1/V2 vulnerabilities.
-          </p>
-
-          <div class="grid grid--2">
-            <div class="card">
-              <h3><span class="text-accent">01.</span> Microarchitecture Config</h3>
-              <p class="text-sm">Parameters chosen to ensure side-channel visibility (cache timing) and speculation window depth.</p>
-              <table class="data-table small-table">
-                <tr>
-                  <td><strong>Pipeline</strong></td>
-                  <td>8-wide fetch/decode/commit</td>
-                </tr>
-                <tr>
-                  <td><strong>ROB / LQ / SQ</strong></td>
-                  <td>192 entries / 72 loads / 56 stores</td>
-                </tr>
-                <tr>
-                  <td><strong>Branch Pred.</strong></td>
-                  <td>Tournament Predictor (Local/Global history)</td>
-                </tr>
-                <tr>
-                  <td><strong>L1 Cache</strong></td>
-                  <td>32KB (8-way), 4-cycle latency <span class="tag tag--red">Attack Target</span></td>
-                </tr>
-                <tr>
-                  <td><strong>L2 Cache</strong></td>
-                  <td>256KB (4-way), 12-cycle latency</td>
-                </tr>
-                <tr>
-                  <td><strong>Coherence</strong></td>
-                  <td>MESI Protocol (Critical for Flush+Reload)</td>
-                </tr>
-              </table>
-            </div>
-
-            <div class="card">
-              <h3><span class="text-accent">02.</span> Workload Selection</h3>
-              <p class="text-sm">We segregate workloads to measure the two conflicting objectives of the thesis.</p>
-              <ul class="var-list">
-                <li>
-                  <strong>Security: Litmus Tests</strong><br>
-                  <span class="text-muted">Custom microbenchmarks derived from <em>Google Project Zero</em> and <em>Paul Kocher's</em> Spectre repository. These maximize leakage signal to stress-test the ODU's clamping logic.</span>
-                </li>
-                <li>
-                  <strong>Performance: SPEC CPU2017</strong><br>
-                  <span class="text-muted">Standard integer benchmarks (e.g., <code>gcc</code>, <code>mcf</code>) used to measure the IPC (Instructions Per Cycle) overhead of the ODU on benign code.</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="callout" style="margin-top: 2rem;">
-            <strong>Comparative Baselines:</strong>
-            <ul class="comparison-list">
-              <li><code class="tag tag--red">Baseline (Unsafe)</code>: Standard O3CPU with no mitigation. Serves as the upper bound for performance (1.0x speedup) and lower bound for security (Max Leakage).</li>
-              <li><code class="tag tag--yellow">Static Fences</code>: <code>LFENCE</code> inserted by compiler before every load following a branch. Serves as the lower bound for performance (~0.6x speedup) and upper bound for security.</li>
-              <li><code class="tag tag--green">ODU (Proposed)</code>: Dynamic clamping. Goal: Converge to Unsafe performance while maintaining Fence-level security on critical gadgets.</li>
-            </ul>
-          </div>
-        </section>
-
-        <!-- Validation Code -->
-        <section id="validation" class="section">
-          <div class="section-header">
-            <span class="section-num">05</span>
-            <h2>Validation Methodology</h2>
-          </div>
-          <p>
-            Validation is performed via a <strong>Trace-Driven Analysis</strong>. We first confirm that the unmodified simulator leaks the secret key via Flush+Reload (High SNR). We then enable the ODU and measure the reduction in <strong>Transmission Rate (Bits/Sec)</strong> versus the <strong>IPC degradation</strong>.
-          </p>
-
-          <!-- Tabbed Code Interface -->
-          <div class="code-tabs">
-            <div class="tabs-header">
-              <button class="tab-btn active" onclick="openTab(event, 'c1')">1. The Gadget (User Space)</button>
-              <button class="tab-btn" onclick="openTab(event, 'c2')">2. The Attack (Measurement)</button>
-              <button class="tab-btn" onclick="openTab(event, 'c3')">3. The Defense (gem5 Fetch)</button>
-            </div>
-
-            <!-- Tab 1: The Victim -->
-            <div id="c1" class="tab-content active">
-              <pre><code class="language-c">
-/**
- * SPECTRE VARIANT 1 GADGET
- * Adapted from Kocher et al. (2019)
- * 
- * Scenario: Attacker mistrains branch predictor to assume (x < array1_size).
- * ODU Goal: Detect that 'array1[x]' is a dependent load with High Gain (Cache Miss)
- * and Low Confidence (Branch History), then clamp before 'array2' access.
- */
-
-void victim_function(size_t x) {
-    if (x < array1_size) {
-        // <--- ODU DECISION POINT
-        // Hardware Confidence (π) < 0.9 (Mistrained)
-        // Leakage Potential (L) = High (Index used in subsequent load)
-        
-        // This line loads the secret into L1 Cache if speculated:
-        temp &= array2[array1[x] * 512];
-    }
-}
-              </code></pre>
-            </div>
-
-            <!-- Tab 2: The Attack -->
-            <div id="c2" class="tab-content">
-              <pre><code class="language-c">
-/**
- * FLUSH + RELOAD MEASUREMENT
- * We measure the 'Transmission Rate' of the side channel.
- * A successful ODU defense results in a bitrate of 0 (Noise).
- */
-
-void measure_leakage() {
-    // 1. PRIME: Flush the probe array from cache hierarchy
-    for (i = 0; i < 256; i++) {
-        _mm_clflush(&array2[i * 512]);
-    }
-
-    // 2. TRIGGER: Call victim with malicious index
-    // If ODU works, the speculative access to array2 is squashed early.
-    victim_function(malicious_x);
-
-    // 3. PROBE: Measure reload times
-    for (i = 0; i < 256; i++) {
-        uint64_t start = __rdtscp(&junk);
-        junk = array2[i * 512]; 
-        uint64_t delta = __rdtscp(&junk) - start;
-        
-        // If fast (< 80 cycles), it was cached -> LEAK
-        if (delta <= CACHE_HIT_THRESHOLD) {
-             results[i]++; 
-        }
-    }
-}
-              </code></pre>
-            </div>
-
-            <!-- Tab 3: The Defense -->
-            <div id="c3" class="tab-content">
-              <pre><code class="language-cpp">
-/**
- * GEM5 FETCH UNIT MODIFICATION (Pseudo-C++)
- * Located in: src/cpu/o3/fetch.cc
- * 
- * We intercept the instruction fetch. If Risk > Utility, we issue
- * a 'pipeline bubble' (Stall) instead of the instruction.
- */
-
-bool FetchUnit::checkRiskPolicy(DynInstPtr inst) {
-    // 1. Extract Hardware State
-    // We query the Tournament Predictor's local history table
+    // 1. Get Hardware Confidence (Dynamic)
+    // Map 2-bit or 3-bit saturating counter to probability range [0.0, 1.0]
     double pi = branchPred->getConfidence(inst->pc); 
     
-    // 2. Extract Semantic Cost (Static Analysis Tag)
-    // 0 = Benign (ADD), 1 = Transmitter (Dependent Load)
-    double L = inst->staticInst->getLeakageClass(); 
+    // 2. Get Instruction Leakage Class (Static)
+    // 0 = Benign (ALU), 1 = Transmitter (Load/Store)
+    // Derived from SVF methodology (Demme et al.)
+    int L_tag = inst->staticInst->getLeakageClass(); 
 
-    // 3. Calculate Gain Estimate
-    // Check MSHR (Miss Status Holding Register) for L1 status
-    double G = dcache->isLikelyHit(inst->addr) ? 1.0 : 100.0;
+    // 3. Estimate Gain (Dynamic)
+    // Query MSHR (Miss Status Holding Register) for cache warmth
+    bool is_hit = dcache->isLikelyHit(inst->addr);
+    double G = is_hit ? GAIN_LOW : GAIN_HIGH;
 
-    // 4. Log-Domain Inequality Check (Avoids Division)
-    // LUTs are precomputed at compile time
-    double risk_val = LUT_Log[L] - LUT_Log[G];
-    double odds_val = LUT_LogOdds[pi]; // log(pi / 1-pi)
+    // 4. Fast Decision (LUT Based)
+    // LUT_ODDS and LUT_COST are pre-computed arrays
+    int32_t odds = LUT_ODDS[ convertToBin(pi) ];
+    int32_t cost = LUT_COST[ L_tag ][ is_hit ];
 
-    if (odds_val > risk_val) {
-        return true; // Safe to Speculate
+    if (odds > cost) {
+        return true; // Speculate
     } else {
-        DPRINTF(ODU, "Clamping speculation at PC: %x\n", inst->pc);
-        return false; // Insert Pipeline Stall
+        DPRINTF(ODU, "Risk Clamp: PC %x (Odds: %d, Cost: %d)\n", inst->pc, odds, cost);
+        return false; // Stall Fetch
     }
 }
-              </code></pre>
+            </code></pre>
+          </div>
+        </section>
+
+        <!-- 3. Security Gadgets -->
+        <section id="gadgets" class="section">
+          <div class="section-head">
+            <span class="mono">03</span>
+            <h2>Security Validation (The Attack)</h2>
+          </div>
+          <p>
+            To validate security, we must prove that the ODU reduces the <strong>Signal-to-Noise Ratio (SNR)</strong> of a side-channel.
+            We use the standard <em>Spectre Variant 1</em> gadget.
+          </p>
+
+          <div class="tabs">
+            <button class="tab active" onclick="setTab(event, 'gadget-c')">Victim Code (C)</button>
+            <button class="tab" onclick="setTab(event, 'attack-c')">Attacker Code (C)</button>
+          </div>
+
+          <div id="gadget-c" class="tab-content active">
+            <pre><code class="language-c">
+// Victim Function (Spectre V1)
+// The ODU must identify the risk in the speculative path.
+
+void victim(size_t x) {
+    if (x < array1_size) { 
+        // 1. Branch Predictor is mistrained to take this path.
+        // 2. 'x' is malicious (out of bounds).
+        
+        // This load depends on 'x'. 
+        // ODU Analysis:
+        // - Confidence (pi) is LOW (due to mistraining history).
+        // - Leakage (L) is HIGH (Secret-dependent load).
+        // -> RESULT: The ODU should STALL here.
+        uint8_t secret = array1[x]; 
+        
+        // Transmitter: Modifies cache state based on secret
+        temp &= array2[secret * 512];
+    }
+}
+            </code></pre>
+          </div>
+
+          <div id="attack-c" class="tab-content">
+            <pre><code class="language-c">
+// Attacker Measurement (Flush + Reload)
+// Based on Mastik / Yarom et al.
+
+void measure_leakage() {
+    // 1. Prime: Flush array2 from cache
+    for (int i=0; i<256; i++) _mm_clflush(&array2[i*512]);
+
+    // 2. Trigger: Call victim speculatively
+    victim(malicious_x);
+
+    // 3. Probe: Measure reload time
+    for (int i=0; i<256; i++) {
+        uint64_t t1 = __rdtscp(&junk);
+        junk = array2[i*512];
+        uint64_t t2 = __rdtscp(&junk) - t1;
+
+        // If time < threshold, it was cached -> LEAK.
+        // The ODU succeeds if this count remains near 0.
+        if (t2 < CACHE_HIT_THRESHOLD) results[i]++;
+    }
+}
+            </code></pre>
+          </div>
+        </section>
+
+        <!-- 4. Metrics -->
+        <section id="metrics" class="section">
+          <div class="section-head">
+            <span class="mono">04</span>
+            <h2>Quantification Metrics</h2>
+          </div>
+          <p>
+            Following <em>Metior</em> and <em>SVF</em>, we do not simply ask "did it leak?". We measure <strong>how much</strong>.
+          </p>
+
+          <div class="grid">
+            <div class="card">
+              <h3>Side-Channel Vulnerability Factor (SVF)</h3>
+              <p>Measures the correlation between the Victim's execution pattern and the Attacker's observation.</p>
+              <div class="metric-val">
+                Target: SVF < 0.01
+              </div>
+              <p class="mono-xs">
+                (Ideally 0.0, implying the attacker sees only noise).
+              </p>
+            </div>
+            
+            <div class="card">
+              <h3>Transmission Rate</h3>
+              <p>The raw bandwidth of the covert channel in Bits/Second under the ODU policy.</p>
+              <div class="metric-val">
+                Baseline: ~500 KB/s <br>
+                Target: < 10 B/s
+              </div>
             </div>
           </div>
         </section>
 
-        <!-- Timeline -->
-        <section id="plan" class="section">
-          <div class="section-header">
-            <span class="section-num">06</span>
-            <h2>Timeline</h2>
+        <!-- 5. Workloads -->
+        <section id="workloads" class="section">
+          <div class="section-head">
+            <span class="mono">05</span>
+            <h2>Performance Workloads</h2>
           </div>
-          <div class="timeline">
-            <div class="timeline-item">
-              <div class="t-date">Weeks 1-2</div>
-              <div class="t-content">Base Setup: gem5 + SPEC2017 + Unsafe Baseline.</div>
-            </div>
-            <div class="timeline-item">
-              <div class="t-date">Weeks 3-5</div>
-              <div class="t-content"><strong>ODU Implementation:</strong> Inject C++ logic into Fetch Unit.</div>
-            </div>
-            <div class="timeline-item">
-              <div class="t-date">Weeks 6-8</div>
-              <div class="t-content"><strong>Security Eval:</strong> Run Spectre Gadgets (RQ1).</div>
-            </div>
-            <div class="timeline-item">
-              <div class="t-date">Weeks 9-10</div>
-              <div class="t-content"><strong>Perf Eval:</strong> Run SPEC2017 & Pareto Analysis (RQ2).</div>
-            </div>
+          <p>
+            To prove the ODU is practical, we must show low overhead on benign code. 
+            We use <strong>SPEC CPU2017</strong> (Integer Speed).
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">Run Script (Bash)</div>
+            <pre><code class="language-bash">
+#!/bin/bash
+# Sweep thresholds to generate the Pareto Frontier (Perf vs Security)
+
+BENCHMARKS=("gcc" "mcf" "xalancbmk")
+THRESHOLDS=("0.5" "1.0" "2.0") # Risk Tolerance
+
+for bench in "${BENCHMARKS[@]}"; do
+  for t in "${THRESHOLDS[@]}"; do
+    
+    ./build/X86/gem5.opt \
+      --outdir=m5out/${bench}_T${t} \
+      configs/example/se.py \
+      --cpu-type=O3CPU \
+      --caches --l2cache \
+      --cmd=$bench \
+      --odu-enabled \
+      --odu-threshold=$t
+      
+  done
+done
+            </code></pre>
           </div>
         </section>
 
